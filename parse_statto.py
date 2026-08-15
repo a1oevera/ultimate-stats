@@ -51,6 +51,7 @@ Stat definitions used (edit here if your team scores things differently)
 import json
 import math
 import sys
+import zipfile
 from collections import defaultdict
 
 from openpyxl import Workbook
@@ -81,8 +82,14 @@ def _uuid_str(v):
 
 
 def load_team(path):
-    with open(path, "r", encoding="utf-8") as fh:
-        doc = json.load(fh)
+    if zipfile.is_zipfile(path):
+        # .statto exports are a zip containing data.json (Statto's native format).
+        with zipfile.ZipFile(path) as zf:
+            with zf.open("data.json") as fh:
+                doc = json.load(fh)
+    else:
+        with open(path, "r", encoding="utf-8") as fh:
+            doc = json.load(fh)
     teams = doc.get("teams", [])
     if not teams:
         raise SystemExit("No teams found in export.")
